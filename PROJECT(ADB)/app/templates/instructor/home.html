@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instructor Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+  <!-- Navigation Bar -->
+  <nav class="bg-indigo-900 text-white p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold">Instructor Dashboard</h1>
+      <a href="{{ url_for('instructor_logout') }}" class="text-white hover:text-indigo-200">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8">
+   
+
+    <!-- Your Sections -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4">Your Assigned Courses</h2>
+      <div class="bg-white border rounded-lg shadow p-6 overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-2 text-left">Course</th>
+              <th class="px-4 py-2 text-left">Course Code</th>
+              <th class="px-4 py-2 text-left">Schedule</th>
+              <th class="px-4 py-2 text-left">Semester</th>
+              <th class="px-4 py-2 text-left">Enrolled Students</th>
+              <th class="px-4 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for section in current_sections_list %}
+            <tr class="border-t">
+              <td class="px-4 py-2">{{ section.course_name }}</td>
+              <td class="px-4 py-2">{{ section.course_code }}</td>
+              <td class="px-4 py-2">{{ section.schedule }}</td>
+              <td class="px-4 py-2">{{ section.semester_name }}</td>
+              <td class="px-4 py-2">{{ section.enrolled_students }}</td>
+              <td class="px-4 py-2">
+                <div class="flex space-x-3 text-lg">
+                  <a href="{{ url_for('instructor_section_details', section_id=section.id) }}" title="Details" class="text-blue-500 hover:text-blue-700">
+                    <i class="fas fa-info-circle"></i>
+                  </a>
+                  <a href="{{ url_for('instructor_students', section_id=section.id) }}" title="View Students" class="text-green-500 hover:text-green-700">
+                    <i class="fas fa-user-graduate"></i>
+                  </a>
+              
+                  
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+            {% if not current_sections_list %}
+            <tr class="border-t">
+              <td colspan="5" class="px-4 py-4 text-center text-gray-500">No courses assigned yet.</td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

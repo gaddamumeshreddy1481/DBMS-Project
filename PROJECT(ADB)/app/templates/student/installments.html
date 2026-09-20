@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installment Plans</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Navigation -->
+  <nav class="bg-white shadow p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-semibold text-gray-800">Student Dashboard</h1>
+      <a href="{{ url_for('student_logout') }}" class="text-red-500 hover:text-red-700 font-medium">
+        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-6">
+          {% for category, message in messages %}
+            <div class="p-4 rounded border-l-4 {{ 'bg-red-100 border-red-500 text-red-700' if category == 'error' else 'bg-green-100 border-green-500 text-green-700' }}">
+              <p>{{ message }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold">Installment Plans</h2>
+      <a href="{{ url_for('student_payments') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+        <i class="fas fa-arrow-left mr-1"></i> Back to Payments
+      </a>
+    </div>
+
+    <!-- Installment Plans -->
+    {% if installment_plans %}
+      {% for plan in installment_plans %}
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-xl font-bold">{{ plan.semester_name }}</h3>
+              <p class="text-gray-600">Created on {{ plan.created_at.strftime('%B %d, %Y') if plan.created_at else 'Unknown' }}</p>
+            </div>
+            <div class="text-right">
+              <span class="px-3 py-1 rounded-full text-sm font-medium 
+                {% if plan.status == 'paid' %}
+                  bg-green-100 text-green-800
+                {% elif plan.status == 'partial' %}
+                  bg-yellow-100 text-yellow-800
+                {% else %}
+                  bg-red-100 text-red-800
+                {% endif %}">
+                {{ plan.status | title }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Plan Details -->
+          <div class="mb-4 p-4 bg-gray-50 rounded">
+            <div class="grid grid-cols-2 gap-4 mb-2">
+              <div>
+                <p class="text-gray-600">Total Amount:</p>
+                <p class="font-semibold">${{ plan.total_amount }}</p>
+              </div>
+              <div>
+                <p class="text-gray-600">Upfront Payment:</p>
+                <p class="font-semibold">${{ plan.upfront_amount }}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-gray-600">Remaining Amount:</p>
+                <p class="font-semibold">${{ plan.remaining_amount }}</p>
+              </div>
+              <div>
+                <p class="text-gray-600">Installments:</p>
+                <p class="font-semibold">{{ plan.installment_count }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Courses -->
+          <div class="mb-4">
+            <h4 class="font-semibold mb-2">Courses in this plan:</h4>
+            <ul class="list-disc list-inside pl-2">
+              {% for course in plan.course_details %}
+                <li>{{ course.course_name }} ({{ course.course_code }})</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <!-- Installments Table -->
+          <h4 class="font-semibold mb-2">Installments:</h4>
+          <div class="overflow-x-auto">
+            <table class="min-w-full">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="py-2 px-4 text-left">Installment</th>
+                  <th class="py-2 px-4 text-left">Amount</th>
+                  <th class="py-2 px-4 text-left">Due Date</th>
+                  <th class="py-2 px-4 text-left">Status</th>
+                  <th class="py-2 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for installment in plan.installments %}
+                <tr class="border-t">
+                  <td class="py-2 px-4">{{ installment.installment_number }} of {{ installment.total_installments }}</td>
+                  <td class="py-2 px-4">${{ installment.amount }}</td>
+                  <td class="py-2 px-4">{{ installment.due_date.strftime('%B %d, %Y') if installment.due_date else 'Unknown' }}</td>
+                  <td class="py-2 px-4">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium 
+                      {% if installment.status == 'paid' %}
+                        bg-green-100 text-green-800
+                      {% elif installment.status != 'paid' and installment.due_date %}
+                        {% if installment.due_date.strftime('%Y-%m-%d') < now.strftime('%Y-%m-%d') %}
+                          bg-red-100 text-red-800
+                        {% else %}
+                          bg-yellow-100 text-yellow-800
+                        {% endif %}
+                      {% else %}
+                        bg-yellow-100 text-yellow-800
+                      {% endif %}">
+                      {{ installment.status | title }}
+                      {% if installment.status != 'paid' and installment.due_date %}
+                        {% if installment.due_date.strftime('%Y-%m-%d') < now.strftime('%Y-%m-%d') %}
+                          (Overdue)
+                        {% endif %}
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td class="py-2 px-4">
+                    {% if installment.status != 'paid' %}
+                      <div class="flex space-x-2">
+                        <!-- Quick Pay Button (Form with POST) -->
+                        <form method="POST" action="{{ url_for('student_quick_pay_installment', installment_id=installment._id) }}" class="inline">
+                          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
+                            <i class="fas fa-bolt mr-1"></i> Pay Now
+                          </button>
+                        </form>
+                        
+                        <!-- Regular Payment Form Link -->
+                        <!-- <a href="{{ url_for('student_pay_installment', installment_id=installment._id) }}" 
+                           class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                          <i class="fas fa-credit-card mr-1"></i> Payment Form
+                        </a> -->
+                      </div>
+                    {% else %}
+                      <span class="text-gray-500 text-sm">
+                        <i class="fas fa-check-circle mr-1"></i> Paid on 
+                        {{ installment.payment_date.strftime('%b %d, %Y') if installment.payment_date else 'Unknown' }}
+                      </span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="p-4 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded">
+          <i class="fas fa-exclamation-circle mr-2"></i> You don't have any installment plans.
+        </div>
+        <div class="mt-4">
+          <a href="{{ url_for('student_payments') }}" class="text-blue-600 hover:underline">
+            Go to Payments to create an installment plan
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Back Link -->
+    <div class="mt-6">
+      <a href="{{ url_for('student_home') }}" class="text-blue-600 hover:underline">
+        <i class="fas fa-arrow-left mr-1"></i> Back to Home
+      </a>
+    </div>
+  </main>
+</body>
+</html>

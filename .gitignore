@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# IntelliJ IDEA
+.idea/
+
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache / compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment / secrets
+.env
+*.env
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+
+# Java / Maven, if applicable
+target/
+out/
+Source codes.zip

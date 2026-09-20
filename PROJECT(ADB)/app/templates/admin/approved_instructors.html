@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Approved Instructors</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script>
+    function filterInstructors() {
+      const semesterFilter = document.getElementById("filter-semester").value.toLowerCase();
+      const courseFilter = document.getElementById("filter-course").value.toLowerCase();
+      const genderFilter = document.getElementById("filter-gender").value.toLowerCase();
+
+      document.querySelectorAll(".instructor-row").forEach(row => {
+        const semesterText = row.getAttribute("data-semester").toLowerCase();
+        const courseText = row.getAttribute("data-courses").toLowerCase();
+        const genderText = row.getAttribute("data-gender").toLowerCase();
+
+        const show =
+          (semesterFilter === "" || semesterText.includes(semesterFilter)) &&
+          (courseFilter === "" || courseText.includes(courseFilter)) &&
+          (genderFilter === "" || genderText === genderFilter);
+
+        row.style.display = show ? "" : "none";
+      });
+    }
+    
+    function showUnauthorizeModal(instructorId) {
+      document.getElementById('unauthorize-modal').classList.remove('hidden');
+      document.getElementById('unauthorize-form').action = '/instructor_authorize/' + instructorId;
+    }
+
+    function hideUnauthorizeModal() {
+      document.getElementById('unauthorize-modal').classList.add('hidden');
+    }
+  </script>
+</head>
+<body class="bg-gray-200 min-h-screen flex flex-col">
+  <!-- Navigation Bar -->
+  <nav class="bg-gray-800 p-4 text-white">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold">Admin Dashboard</h1>
+      <a href="{{ url_for('admin_logout') }}" class="bg-red-500 px-3 py-2 rounded hover:bg-red-600">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto p-6">
+    <h2 class="text-2xl font-bold mb-6">Approved Instructors</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4">
+          {% for category, message in messages %}
+            <div class="p-2 rounded text-white {{ 'bg-green-500' if category == 'success' else 'bg-red-500' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Filters -->
+    <div class="bg-white p-4 mb-6 rounded shadow flex flex-wrap gap-4 items-center">
+      <select id="filter-semester" onchange="filterInstructors()" class="p-2 border rounded">
+        <option value="">Filter by Semester</option>
+        {% for semester in semesters %}
+        <option value="{{ semester.semester_name }}">{{ semester.semester_name }}</option>
+        {% endfor %}
+      </select>
+
+      <select id="filter-course" onchange="filterInstructors()" class="p-2 border rounded">
+        <option value="">Filter by Course</option>
+        {% for course in available_courses %}
+        <option value="{{ course.course_name }}">{{ course.course_name }}</option>
+        {% endfor %}
+      </select>
+
+     
+    </div>
+
+    <!-- Instructor Table -->
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-center border border-gray-200">
+          <thead class="bg-gray-100 text-gray-700">
+            <tr>
+              <th class="py-3 px-4 border">Name</th>
+              <th class="py-3 px-4 border">Email</th>
+              <th class="py-3 px-4 border">Phone</th>
+              <th class="py-3 px-4 border">Assigned Courses</th>
+              <th class="py-3 px-4 border">Gender</th>
+              <th class="py-3 px-4 border">Authorization</th>
+              <th class="py-3 px-4 border">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for instructor in instructors %}
+            {% set all_semesters = instructor.assigned_courses | map(attribute='semester_name') | join(', ') %}
+            {% set all_courses = instructor.assigned_courses | map(attribute='course_name') | join(', ') %}
+            <tr class="hover:bg-gray-50 instructor-row"
+                data-semester="{{ all_semesters }}"
+                data-courses="{{ all_courses }}"
+                data-gender="{{ instructor.gender }}">
+              <td class="py-2 px-4 border">{{ instructor.name }}</td>
+              <td class="py-2 px-4 border">{{ instructor.email }}</td>
+              <td class="py-2 px-4 border">{{ instructor.phone }}</td>
+              <td class="py-2 px-4 border">
+                {% if instructor.assigned_courses %}
+                  <ul class="text-left list-disc list-inside text-sm">
+                    {% for section in instructor.assigned_courses %}
+                    <li>{{ section.course_name }} - {{ section.section_id }} - {{ section.course_code }} - {{ section.schedule }}</li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="text-gray-500">No courses assigned</span>
+                {% endif %}
+              </td>
+              <td class="py-2 px-4 border">{{ instructor.gender }}</td>
+              <td class="py-2 px-4 border">
+                <span class="px-2 py-1 rounded text-xs font-semibold {{ 'bg-green-100 text-green-800' if instructor.authorization_status == 'authorized' else 'bg-red-100 text-red-800' }}">
+                  {{ instructor.authorization_status | default('unauthorized', true) }}
+                </span>
+              </td>
+              <td class="py-2 px-4 border">
+                {% if instructor.authorization_status == 'authorized' %}
+                  <button onclick="showUnauthorizeModal('{{ instructor._id }}')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                    Unauthorize
+                  </button>
+                {% else %}
+                  <form action="{{ url_for('instructor_authorize', instructor_id=instructor._id) }}" method="POST">
+                    <input type="hidden" name="authorization_status" value="authorized">
+                    <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                      Authorize
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Back Button -->
+      <div class="mt-6">
+        <a href="{{ url_for('admin_home') }}" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          ← Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Unauthorize Modal -->
+  <div id="unauthorize-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+      <h3 class="text-xl font-bold mb-4">Reason for Unauthorizing</h3>
+      <form id="unauthorize-form" method="POST">
+        <input type="hidden" name="authorization_status" value="unauthorized">
+        <div class="mb-4">
+          <label for="reason" class="block text-sm font-medium text-gray-700">Reason</label>
+          <textarea id="reason" name="reason" class="mt-1 p-2 border border-gray-300 rounded w-full" required></textarea>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="hideUnauthorizeModal()" class="bg-gray-500 text-white px-4 py-2 rounded mr-2">
+            Cancel
+          </button>
+          <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+            Unauthorize
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

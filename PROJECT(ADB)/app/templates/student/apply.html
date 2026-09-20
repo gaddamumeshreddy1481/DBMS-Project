@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Application</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen px-4">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+    <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">
+      <i class="fas fa-user-graduate text-blue-500 mr-2"></i> Student Application Form
+    </h2>
+    
+    <form action="{{ url_for('student_apply') }}" method="POST">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="firstname" class="block text-sm font-medium text-gray-700">First Name</label>
+          <input type="text" id="firstname" name="firstname" class="mt-1 p-2 border border-gray-300 rounded w-full" required>
+        </div>
+
+        <div>
+          <label for="lastname" class="block text-sm font-medium text-gray-700">Last Name</label>
+          <input type="text" id="lastname" name="lastname" class="mt-1 p-2 border border-gray-300 rounded w-full" required>
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+          <input type="email" id="email" name="email" class="mt-1 p-2 border border-gray-300 rounded w-full" required>
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+          <input type="password" id="password" name="password" class="mt-1 p-2 border border-gray-300 rounded w-full" required>
+        </div>
+
+        <div>
+          <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="mt-1 p-2 border border-gray-300 rounded w-full" required>
+        </div>
+
+        <div>
+          <label for="date_of_birth" class="block text-sm font-medium text-gray-700">Date of Birth (mm/dd/yyyy)</label>
+          <input type="text" id="date_of_birth" name="date_of_birth" placeholder="mm/dd/yyyy" pattern="(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/[0-9]{4}" class="mt-1 p-2 border border-gray-300 rounded w-full" required>
+          <small class="text-gray-500">Format: mm/dd/yyyy (e.g., 05/07/2025)</small>
+        </div>
+
+        <div>
+          <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
+          <select id="gender" name="gender" class="mt-1 p-2 border border-gray-300 rounded w-full" required>
+            <option value="" disabled selected>Select your gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="zipcode" class="block text-sm font-medium text-gray-700">Zip Code</label>
+          <input type="text" id="zipcode" name="zipcode" placeholder="12345" class="mt-1 p-2 border border-gray-300 rounded w-full" required>
+        </div>
+      </div>
+
+      <button type="submit" class="w-full mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+        <i class="fas fa-paper-plane mr-2"></i>Submit Application
+      </button>
+
+      <div class="mt-4 text-center">
+        <a href="{{ url_for('student_signin') }}" class="text-blue-500 hover:underline">Already have an account? Login</a>
+      </div>
+      <div class="text-center mt-2">
+        <a href="{{ url_for('home') }}" class="text-blue-500 hover:underline">Back to Home</a>
+      </div>
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mt-6">
+          {% for category, message in messages %}
+            <div class="p-2 bg-green-100 text-green-700 rounded">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+<script>
+  // Date format validation for mm/dd/yyyy
+  document.getElementById('date_of_birth').addEventListener('input', function(e) {
+    let value = e.target.value;
+    
+    // Remove non-numeric characters except for slashes
+    value = value.replace(/[^0-9/]/g, '');
+    
+    // Auto-add slashes after mm and dd
+    if (value.length === 2 && !value.includes('/')) {
+      value += '/';
+    } else if (value.length === 5 && value.charAt(2) === '/' && !value.includes('/', 3)) {
+      value += '/';
+    }
+    
+    // Limit to mm/dd/yyyy format (10 characters)
+    if (value.length > 10) {
+      value = value.slice(0, 10);
+    }
+    
+    e.target.value = value;
+  });
+  
+  // Form validation before submission
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const dobInput = document.getElementById('date_of_birth');
+    const dobValue = dobInput.value;
+    
+    // Check if the format is mm/dd/yyyy
+    const datePattern = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/;
+    
+    if (!datePattern.test(dobValue)) {
+      e.preventDefault();
+      alert('Please enter a valid date in mm/dd/yyyy format');
+      dobInput.focus();
+      return false;
+    }
+    
+    // Additional validation for valid dates (e.g., no Feb 30)
+    const parts = dobValue.split('/');
+    const month = parseInt(parts[0], 10);
+    const day = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    
+    const date = new Date(year, month - 1, day);
+    if (date.getMonth() !== month - 1 || date.getDate() !== day || date.getFullYear() !== year) {
+      e.preventDefault();
+      alert('Please enter a valid date. The date you entered does not exist.');
+      dobInput.focus();
+      return false;
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Class Enrollment Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col font-sans">
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-blue-700">Enrollment System</h1>
+      <div class="flex space-x-4">
+        <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-blue-700">Home</a>
+        <a href="{{ url_for('admin_signin') }}" class="text-gray-600 hover:text-blue-700">Admin</a>
+        <a href="{{ url_for('instructor_signin') }}" class="text-gray-600 hover:text-blue-700">Instructor</a>
+        <a href="{{ url_for('student_signin') }}" class="text-gray-600 hover:text-blue-700">Student</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="bg-blue-50 py-20 text-center shadow-inner">
+    <div class="container mx-auto px-4">
+      <h2 class="text-4xl font-bold mb-4 text-blue-800">Simplifying Class Enrollment</h2>
+      <p class="text-lg text-blue-600 max-w-3xl mx-auto">
+        A smart, conflict-free, seat-aware academic management platform for students, instructors, and admins.
+        Manage enrollments, course sections, payments, and policies efficiently.
+      </p>
+    </div>
+  </header>
+
+  <!-- Portals -->
+  <section class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Admin Card -->
+        <div class="bg-gray-50 rounded-lg shadow-md hover:shadow-lg p-6 text-center">
+          <div class="text-blue-600 mb-4 text-3xl">
+            <i class="fas fa-user-shield"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Admin Portal</h3>
+          <p class="text-gray-600 mb-4 text-sm">Oversee courses, sections, policies, and registration windows.</p>
+          <ul class="text-sm text-gray-500 mb-4">
+            <li><i class="fas fa-check mr-2 text-blue-500"></i>Seat Availability & Waitlist Handling</li>
+            <li><i class="fas fa-check mr-2 text-blue-500"></i>Drop/Refund Compliance</li>
+            <li><i class="fas fa-check mr-2 text-blue-500"></i>Monitor Enrollments</li>
+          </ul>
+          <a href="{{ url_for('admin_signin') }}" class="text-blue-600 hover:underline">Access Admin Portal <i class="fas fa-arrow-right ml-2"></i></a>
+        </div>
+
+        <!-- Instructor Card -->
+        <div class="bg-gray-50 rounded-lg shadow-md hover:shadow-lg p-6 text-center">
+          <div class="text-green-600 mb-4 text-3xl">
+            <i class="fas fa-chalkboard-teacher"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Instructor Portal</h3>
+          <p class="text-gray-600 mb-4 text-sm">Manage schedules, students, and section assignments.</p>
+          <ul class="text-sm text-gray-500 mb-4">
+            <li><i class="fas fa-check mr-2 text-green-500"></i>Fixed Teaching Schedules</li>
+            <li><i class="fas fa-check mr-2 text-green-500"></i>Section-Based Student Management</li>
+            <li><i class="fas fa-check mr-2 text-green-500"></i>Grading & Compliance</li>
+          </ul>
+          <a href="{{ url_for('instructor_signin') }}" class="text-green-600 hover:underline">Access Instructor Portal <i class="fas fa-arrow-right ml-2"></i></a>
+        </div>
+
+        <!-- Student Card -->
+        <div class="bg-gray-50 rounded-lg shadow-md hover:shadow-lg p-6 text-center">
+          <div class="text-purple-600 mb-4 text-3xl">
+            <i class="fas fa-user-graduate"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Student Portal</h3>
+          <p class="text-gray-600 mb-4 text-sm">Register for courses, track progress, and handle payments.</p>
+          <ul class="text-sm text-gray-500 mb-4">
+            <li><i class="fas fa-check mr-2 text-purple-500"></i>Conflict-Free Course Selection</li>
+            <li><i class="fas fa-check mr-2 text-purple-500"></i>View Academic History</li>
+            <li><i class="fas fa-check mr-2 text-purple-500"></i>Drop with Refund Options</li>
+          </ul>
+          <a href="{{ url_for('student_signin') }}" class="text-purple-600 hover:underline">Access Student Portal <i class="fas fa-arrow-right ml-2"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-white py-10 border-t border-gray-200 mt-auto">
+    <div class="container mx-auto px-4 text-sm text-gray-600 text-center">
+      <p class="mb-2">Class Enrollment Management System - Built for secure and scalable academic operations.</p>
+      <p>&copy; {{ datetime.now().year }} College Management System. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

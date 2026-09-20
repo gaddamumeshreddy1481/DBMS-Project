@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Students</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100">
+  <!-- Navigation Bar -->
+  <nav class="bg-indigo-900 text-white p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold">Instructor Dashboard</h1>
+      <a href="{{ url_for('instructor_logout') }}" class="text-white hover:text-indigo-200">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold mb-6">My Students</h2>
+
+    <div class="bg-white border rounded-lg shadow p-6 overflow-x-auto">
+      <table class="min-w-full">
+        <thead class="bg-gray-100 text-left">
+          <tr>
+            <th class="px-4 py-2 font-semibold">Name</th>
+            <th class="px-4 py-2 font-semibold">Email</th>
+            <th class="px-4 py-2 font-semibold">Date of Birth</th>
+            <th class="px-4 py-2 font-semibold">Gender</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr class="border-t hover:bg-gray-50">
+            <td class="px-4 py-2">{{ student.name }}</td>
+            <td class="px-4 py-2">{{ student.email }}</td>
+            <td class="px-4 py-2">{{ student.date_of_birth }}</td>
+            <td class="px-4 py-2 capitalize">{{ student.gender }}</td>
+          </tr>
+          {% else %}
+          <tr class="border-t">
+            <td colspan="4" class="px-4 py-4 text-center text-gray-500">No students found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mt-6">
+      <a href="{{ url_for('instructor_home') }}" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+        ← Back to Dashboard
+      </a>
+    </div>
+  </main>
+</body>
+</html>

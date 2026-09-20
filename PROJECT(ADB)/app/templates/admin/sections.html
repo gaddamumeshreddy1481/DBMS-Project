@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Sections</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav class="bg-gray-800 p-4 text-white">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold">Admin Dashboard</h1>
+      <a href="{{ url_for('admin_logout') }}" class="bg-red-500 px-3 py-2 rounded hover:bg-red-600">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto p-6">
+    <h2 class="text-3xl font-bold mb-6 text-center">Section Management</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4">
+          {% for category, message in messages %}
+            <div class="p-3 rounded {{ 'bg-green-500 text-white' if category == 'success' else 'bg-red-500 text-white' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Create/Edit Section Form -->
+    <section class="bg-white p-6 rounded shadow mb-8">
+      <h3 class="text-xl font-semibold mb-4">{% if edit_section %}Edit Section{% else %}Create New Section{% endif %}</h3>
+      <form action="{% if edit_section %}{{ url_for('admin_update_section', section_id=edit_section._id) }}{% else %}{{ url_for('admin_sections') }}{% endif %}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium">Section ID</label>
+          <input type="text" name="section_id" value="{% if edit_section %}{{ edit_section.section_id }}{% endif %}" {% if edit_section %}readonly{% endif %} required class="w-full p-2 border rounded mt-1">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Select Course</label>
+          <select name="course_id" required class="w-full p-2 border rounded mt-1">
+            <option value="">Select</option>
+            {% for course in courses %}
+              <option value="{{ course._id }}" {% if edit_section and edit_section.course_id|string == course._id|string %}selected{% endif %}>{{ course.course_name }} ({{ course.course_code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Select Instructor</label>
+          <select name="instructor_id" required class="w-full p-2 border rounded mt-1">
+            <option value="">Select</option>
+            {% for instructor in instructors %}
+              <option value="{{ instructor._id }}" {% if edit_section and edit_section.instructor_id|string == instructor._id|string %}selected{% endif %}>{{ instructor.firstname }} {{ instructor.lastname }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Semester</label>
+          <select name="semester_id" required class="w-full p-2 border rounded mt-1">
+            <option value="">Select</option>
+            {% for semester in semesters %}
+              <option value="{{ semester._id }}" {% if edit_section and edit_section.semester_id|string == semester._id|string %}selected{% endif %}>{{ semester.semester_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium mb-2">Schedule</label>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm font-medium mb-2">Days</p>
+              <div class="grid grid-cols-3 gap-2">
+                <label class="flex items-center">
+                  <input type="checkbox" name="schedule_days" value="Monday" class="mr-2">
+                  <span>Monday</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" name="schedule_days" value="Tuesday" class="mr-2">
+                  <span>Tuesday</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" name="schedule_days" value="Wednesday" class="mr-2">
+                  <span>Wednesday</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" name="schedule_days" value="Thursday" class="mr-2">
+                  <span>Thursday</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" name="schedule_days" value="Friday" class="mr-2">
+                  <span>Friday</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" name="schedule_days" value="Saturday" class="mr-2">
+                  <span>Saturday</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <p class="text-sm font-medium mb-2">Time</p>
+              <div class="flex items-center space-x-2">
+                <div>
+                  <label class="block text-xs">Start Time</label>
+                  <input type="time" name="start_time" required class="p-2 border rounded">
+                </div>
+                <span>to</span>
+                <div>
+                  <label class="block text-xs">End Time</label>
+                  <input type="time" name="end_time" required class="p-2 border rounded">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Room</label>
+          <select name="room_id" id="room-select" class="w-full p-2 border rounded mt-1">
+            <option value="">Select Room</option>
+            {% for room in rooms %}
+              <option value="{{ room._id }}" data-capacity="{{ room.capacity }}" {% if edit_section and edit_section.room_id|string == room._id|string %}selected{% endif %}>{{ room.building }} {{ room.room_number }} (Capacity: {{ room.capacity }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Seat Capacity</label>
+          <input type="number" id="seat-capacity" name="seat_capacity" min="1" value="{% if edit_section %}{{ edit_section.seat_capacity }}{% endif %}" required class="w-full p-2 border rounded mt-1">
+        </div>
+        
+        <script>
+          // Update seat capacity based on room selection
+          document.getElementById('room-select').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+              const roomCapacity = selectedOption.getAttribute('data-capacity');
+              document.getElementById('seat-capacity').value = roomCapacity;
+            }
+          });
+        </script>
+
+        <div class="md:col-span-2 flex justify-between mt-4">
+          {% if edit_section %}
+          <a href="{{ url_for('admin_sections') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</a>
+          {% endif %}
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">{% if edit_section %}Update Section{% else %}Create Section{% endif %}</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- List of Existing Sections -->
+    <section class="bg-white p-6 rounded shadow">
+      <h3 class="text-xl font-semibold mb-4">All Sections</h3>
+      {% if sections %}
+        <table class="min-w-full border border-gray-200 text-sm">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="p-2 border">Section ID</th>
+              <th class="p-2 border">Course</th>
+              <th class="p-2 border">Instructor</th>
+              <th class="p-2 border">Semester</th>
+              <th class="p-2 border">Schedule</th>
+              <th class="p-2 border">Capacity</th>
+              <th class="p-2 border">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sec in sections %}
+            <tr class="hover:bg-gray-50">
+              <td class="p-2 border">{{ sec.section_id }}</td>
+              <td class="p-2 border">{{ sec.course_name }}</td>
+              <td class="p-2 border">{{ sec.instructor_name }}</td>
+              <td class="p-2 border">{{ sec.semester_name }}</td>
+              <td class="p-2 border">{{ sec.schedule }}</td>
+              <td class="p-2 border">{{ sec.seat_capacity }}</td>
+              <td class="p-2 border">
+                <a href="{{ url_for('admin_sections', edit_section_id=sec._id) }}" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 text-xs">Edit</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-gray-600">No sections available.</p>
+      {% endif %}
+    </section>
+
+    <div class="mt-6">
+      <a href="{{ url_for('admin_home') }}" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">← Back to Dashboard</a>
+    </div>
+
+  </main>
+</body>
+</html>

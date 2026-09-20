@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Course Registration</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+<div class="container mx-auto px-4 py-8">
+    <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">
+        Course Registration - {{ semester.semester_name }}
+    </h2>
+
+    <!-- flash messages add some style to it--> 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+
+    <!-- Previous Semester Courses -->
+    {% if previous_semester_courses %}
+    <div class="mb-8">
+        <h3 class="text-xl font-semibold mb-4 text-gray-700">Previous Semester Courses</h3>
+        <div class="bg-gray-50 rounded-lg p-4">
+            <ul class="list-disc pl-5">
+                {% for course in previous_semester_courses %}
+                <li class="text-gray-600">{{ course.course_code }} - {{ course.course_name }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Available Courses -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for section in all_sections %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800">{{ section.course_name }}</h3>
+                    <p class="text-gray-600">{{ section.course_code }} - Section {{ section.section_id }}</p>
+                    <p class="text-gray-500 text-sm">Instructor: {{ section.instructor_name }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-medium 
+                        {% if section.available_seats > 10 %}
+                            bg-green-100 text-green-800
+                        {% elif section.available_seats > 0 %}
+                            bg-yellow-100 text-yellow-800
+                        {% else %}
+                            bg-red-100 text-red-800
+                        {% endif %}
+                    ">
+                        {{ section.available_seats }} seats available
+                    </span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h4 class="font-medium text-gray-700 mb-2">Schedule:</h4>
+                <ul class="list-disc pl-5 text-gray-600">
+                    {% for schedule in section.schedule %}
+                    <li>{{ schedule.day }} {{ schedule.start_time }} - {{ schedule.end_time }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="mb-4">
+                <h4 class="font-medium text-gray-700 mb-2">Classroom:</h4>
+                <p class="text-gray-600 font-semibold">
+                    {{ section.classroom }}
+                </p>
+            </div>
+
+            <div class="mt-4">
+                {% if section.is_enrolled %}
+                <span class="inline-block px-4 py-2 bg-green-500 text-white rounded">
+                    Registered
+                </span>
+                <form action="{{ url_for('student_drop_course') }}" method="POST" class="inline">
+                    <input type="hidden" name="enrollment_id" value="{{ section.enrollment_id }}">
+                    <input type="hidden" name="semester_id" value="{{ semester_id }}">
+                    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition ml-2" onclick="return confirm('Are you sure you want to drop this course?');">
+                        Drop
+                    </button>
+                </form>
+                {% elif section.reason and 'conflict' in section.reason|lower %}
+                <span class="inline-block px-4 py-2 bg-red-500 text-white rounded">Conflict</span>
+                <span class="inline-block px-4 py-2 bg-gray-500 text-white rounded cursor-not-allowed">
+                    Cannot Register
+                </span>
+                {% elif section.available_seats > 0 %}
+                <form action="{{ url_for('student_register_course', semester_id=semester_id) }}" method="POST" class="inline">
+                    <input type="hidden" name="section_id" value="{{ section._id }}">
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                        Register
+                    </button>
+                </form>
+                {% else %}
+                <span class="inline-block px-4 py-2 bg-gray-500 text-white rounded cursor-not-allowed">
+                    Full
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not all_sections %}
+    <div class="text-center text-gray-600 mt-8">
+        No courses available for registration at this time.
+    </div>
+    {% endif %}
+
+    <br>
+    <br>
+    {% if conflict_rules %}
+    <div class="max-w-2xl mx-auto mb-8">
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+            <h4 class="font-semibold text-yellow-800 mb-2">Registration Conflict Rules:</h4>
+            <ul class="list-disc pl-6 text-yellow-900">
+                {% for rule in conflict_rules %}
+                <li>{{ rule }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+    <a href="{{ url_for('student_home') }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+        Back
+    </a>
+</div>
+</body>
+</html>

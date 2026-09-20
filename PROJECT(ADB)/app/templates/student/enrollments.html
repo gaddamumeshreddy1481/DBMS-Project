@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Enrollments</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Navigation -->
+  <nav class="bg-white shadow p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <a href="{{ url_for('student_home') }}" class="text-blue-500 hover:text-blue-700 font-medium">
+          <i class="fas fa-home mr-1"></i> Home
+        </a>
+        <h1 class="text-xl font-semibold text-gray-800">My Enrollments</h1>
+      </div>
+      <a href="{{ url_for('student_logout') }}" class="text-red-500 hover:text-red-700 font-medium">
+        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-6">
+          {% for category, message in messages %}
+            <div class="p-4 rounded border-l-4 {{ 'bg-red-100 border-red-500 text-red-700' if category == 'error' else 'bg-green-100 border-green-500 text-green-700' }}">
+              <p>{{ message }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Enrollments -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+      <h2 class="text-2xl font-bold mb-4">My Enrollments</h2>
+      {% if enrollments %}
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="py-2 px-4 text-left">Course</th>
+                <th class="py-2 px-4 text-left">Code</th>
+                <th class="py-2 px-4 text-left">Schedule</th>
+                <th class="py-2 px-4 text-left">Payment Status</th>
+                <th class="py-2 px-4 text-left">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for enrollment in enrollments %}
+              <tr class="border-t">
+                <td class="py-2 px-4">{{ enrollment.course_name }}</td>
+                <td class="py-2 px-4">{{ enrollment.course_code }}</td>
+                <td class="py-2 px-4">{{ enrollment.schedule }}</td>
+                <td class="py-2 px-4">
+                  <span class="{{ 'text-green-600' if enrollment.payment_status == 'Paid' else 'text-red-600' }}">
+                    {{ enrollment.payment_status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  {% if enrollment.can_drop %}
+                    <div class="flex space-x-2">
+                      <form method="POST" action="{{ url_for('student_drop_course') }}" style="display: inline;">
+                        <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                        <button type="submit" class="text-red-600 hover:text-red-900 bg-transparent border-none cursor-pointer" style="font-size: inherit;">
+                          <i class="fas fa-trash mr-1"></i> Drop
+                        </button>
+                      </form>
+                      
+                      {% if enrollment.payment_status != 'Paid' %}
+                        <a href="{{ url_for('student_installments') }}" class="text-blue-600 hover:text-blue-800 ml-4">
+                          <i class="fas fa-credit-card mr-1"></i> Pay
+                        </a>
+                      {% endif %}
+                    </div>
+                  {% else %}
+                    <span class="text-gray-500">
+                      <i class="fas fa-clock mr-1"></i> Drop deadline passed
+                    </span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4">
+          <p class="text-gray-600">No active enrollments.</p>
+          <a href="{{ url_for('student_select_semester') }}" class="inline-block mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            <i class="fas fa-plus mr-1"></i> Register for Courses
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Back Link -->
+    <div class="mt-6">
+      <a href="{{ url_for('student_home') }}" class="text-blue-600 hover:underline">
+        <i class="fas fa-arrow-left mr-1"></i> Back to Home
+      </a>
+    </div>
+  </main>
+</body>
+</html>

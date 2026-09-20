@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Enrollment Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 min-h-screen flex flex-col">
+  <!-- Navbar -->
+  <nav class="bg-gray-800 p-4 text-white">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold">Admin Dashboard</h1>
+      <div class="flex space-x-4">
+        <a href="{{ url_for('admin_home') }}" class="bg-blue-500 px-3 py-2 rounded hover:bg-blue-600">Dashboard</a>
+        <a href="{{ url_for('admin_logout') }}" class="bg-red-500 px-3 py-2 rounded hover:bg-red-600">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">Enrollment Management</h1>
+
+    <!-- Enrollments List -->
+    <section class="bg-white p-6 rounded-lg shadow-lg mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Current Enrollments</h2>
+      
+      <!-- Filter Options -->
+      <div class="mb-6 p-4 bg-gray-100 rounded-lg">
+        <h3 class="text-lg font-medium mb-2">Filter Enrollments</h3>
+        <form method="GET" action="{{ url_for('admin_enrollments') }}" class="flex flex-wrap gap-4">
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+            <select id="status" name="status" class="mt-1 p-2 border border-gray-300 rounded">
+              <option value="">All Statuses</option>
+              <option value="enrolled">Enrolled</option>
+              <option value="dropped">Dropped</option>
+              <option value="waitlisted">Waitlisted</option>
+            </select>
+          </div>
+          <div>
+            <label for="course" class="block text-sm font-medium text-gray-700">Course</label>
+            <select id="course" name="course_id" class="mt-1 p-2 border border-gray-300 rounded">
+              <option value="">All Courses</option>
+              {% if courses %}
+                {% for course in courses %}
+                <option value="{{ course._id }}">{{ course.course_name }} ({{ course.course_code }})</option>
+                {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+          <div class="self-end">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Apply Filters</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Enrollments Table -->
+      {% if enrollments %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="py-3 px-4 text-left">Student</th>
+              <th class="py-3 px-4 text-left">Course</th>
+              <th class="py-3 px-4 text-left">Section</th>
+              <th class="py-3 px-4 text-left">Status</th>
+              <th class="py-3 px-4 text-left">Payment Status</th>
+              <th class="py-3 px-4 text-left">Enrolled Date</th>
+              <th class="py-3 px-4 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            {% for enrollment in enrollments %}
+            <tr class="hover:bg-gray-50">
+              <td class="py-3 px-4">{{ enrollment.student_name }}</td>
+              <td class="py-3 px-4">{{ enrollment.course_name }}</td>
+              <td class="py-3 px-4">{{ enrollment.section_details }}</td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-1 rounded-full text-xs font-semibold 
+                  {% if enrollment.status == 'enrolled' %}bg-green-100 text-green-800
+                  {% elif enrollment.status == 'dropped' %}bg-red-100 text-red-800
+                  {% elif enrollment.status == 'waitlisted' %}bg-yellow-100 text-yellow-800
+                  {% endif %}">
+                  {{ enrollment.status|capitalize }}
+                </span>
+              </td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-1 rounded-full text-xs font-semibold 
+                  {% if enrollment.payment_status == 'paid' %}bg-green-100 text-green-800
+                  {% elif enrollment.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
+                  {% elif enrollment.payment_status == 'refunded' %}bg-blue-100 text-blue-800
+                  {% else %}bg-gray-100 text-gray-800
+                  {% endif %}">
+                  {{ enrollment.payment_status|capitalize if enrollment.payment_status else 'Unknown' }}
+                </span>
+              </td>
+              <td class="py-3 px-4">{{ enrollment.created_at.strftime('%Y-%m-%d') if enrollment.created_at else 'N/A' }}</td>
+              <td class="py-3 px-4">
+                <div class="flex space-x-2">
+                  <button onclick="openEnrollmentModal('{{ enrollment._id }}')" class="text-blue-500 hover:text-blue-700">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  {% if enrollment.status != 'dropped' %}
+                  <form method="POST" action="{{ url_for('admin_update_enrollment_status', enrollment_id=enrollment._id) }}" class="inline">
+                    <input type="hidden" name="status" value="dropped">
+                    <button type="submit" class="text-red-500 hover:text-red-700" onclick="return confirm('Are you sure you want to drop this enrollment?')">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-gray-600">No enrollments found.</p>
+      {% endif %}
+    </section>
+
+    <!-- Modal for Editing Enrollment -->
+    <div id="enrollmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h3 class="text-xl font-semibold mb-4">Update Enrollment</h3>
+        <form id="enrollmentForm" method="POST" action="">
+          <div class="mb-4">
+            <label for="modal_status" class="block text-sm font-medium text-gray-700">Status</label>
+            <select id="modal_status" name="status" class="mt-1 p-2 border border-gray-300 rounded w-full">
+              <option value="enrolled">Enrolled</option>
+              <option value="dropped">Dropped</option>
+              <option value="waitlisted">Waitlisted</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label for="drop_reason" class="block text-sm font-medium text-gray-700">Drop Reason (if applicable)</label>
+            <textarea id="drop_reason" name="drop_reason" rows="3" class="mt-1 p-2 border border-gray-300 rounded w-full"></textarea>
+          </div>
+          <div class="mb-4">
+            <label for="payment_status" class="block text-sm font-medium text-gray-700">Payment Status</label>
+            <select id="payment_status" name="payment_status" class="mt-1 p-2 border border-gray-300 rounded w-full">
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="refunded">Refunded</option>
+            </select>
+          </div>
+          <div class="flex justify-end space-x-2">
+            <button type="button" onclick="closeEnrollmentModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mt-6">
+        {% for category, message in messages %}
+          <div class="p-2 rounded text-white {{ 'bg-green-500' if category == 'success' else 'bg-red-500' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% endwith %}
+  </main>
+
+  <script>
+    function openEnrollmentModal(enrollmentId) {
+      document.getElementById('enrollmentForm').action = `/admin/update_enrollment/${enrollmentId}`;
+      document.getElementById('enrollmentModal').classList.remove('hidden');
+    }
+
+    function closeEnrollmentModal() {
+      document.getElementById('enrollmentModal').classList.add('hidden');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('enrollmentModal').addEventListener('click', function(event) {
+      if (event.target === this) {
+        closeEnrollmentModal();
+      }
+    });
+  </script>
+</body>
+</html>

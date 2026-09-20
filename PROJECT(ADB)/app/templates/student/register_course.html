@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register for Courses</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Navigation -->
+  <nav class="bg-white shadow p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <a href="{{ url_for('student_home') }}" class="text-blue-500 hover:text-blue-700 font-medium">
+          <i class="fas fa-home mr-1"></i> Home
+        </a>
+        <h1 class="text-xl font-semibold text-gray-800">Course Registration</h1>
+      </div>
+      <a href="{{ url_for('student_logout') }}" class="text-red-500 hover:text-red-700 font-medium">
+        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-6">
+          {% for category, message in messages %}
+            <div class="p-4 rounded border-l-4 {{ 'bg-red-100 border-red-500 text-red-700' if category == 'error' else 'bg-green-100 border-green-500 text-green-700' }}">
+              <p>{{ message }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Registration Form -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+      <h2 class="text-2xl font-bold mb-4">Register for a Course</h2>
+      <form method="POST" action="{{ url_for('student_register_course', semester_id=request.view_args.semester_id) }}">
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold mb-2">Available Courses</h3>
+          <div class="grid grid-cols-1 gap-4">
+            {% for section in sections %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:bg-blue-50 transition">
+              <div class="flex items-start">
+                <input type="radio" id="section_{{ section._id }}" name="section_id" value="{{ section._id }}" class="mt-1 mr-3" required>
+                <label for="section_{{ section._id }}" class="cursor-pointer flex-grow">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <h4 class="font-semibold text-lg">{{ section.course_name }}</h4>
+                      <p class="text-gray-600">{{ section.course_code }}</p>
+                      <p class="text-gray-600">Schedule: {{ section.schedule }}</p>
+                      <p class="text-gray-600">Location: {{ section.classroom }}</p>
+                    </div>
+                    <div class="text-right">
+                      <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold {{ 'bg-green-100 text-green-800' if section.available_seats > 5 else 'bg-yellow-100 text-yellow-800' if section.available_seats > 0 else 'bg-red-100 text-red-800' }}">
+                        {{ section.available_seats }} / {{ section.total_seats }} seats
+                      </span>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            {% endfor %}
+            {% if not sections %}
+            <div class="p-4 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded">
+              <i class="fas fa-exclamation-circle mr-2"></i> No available courses for this semester.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+          <i class="fas fa-plus mr-1"></i> Register for Selected Course
+        </button>
+      </form>
+    </div>
+
+    <!-- Enrolled Sections -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold mb-4">Enrolled Sections</h2>
+      {% if enrolled_sections %}
+      <ul class="space-y-4">
+        {% for enroll in enrolled_sections %}
+        <li class="p-4 border border-gray-200 rounded bg-gray-50 flex justify-between items-center">
+          <div>
+            <p class="font-semibold text-lg">{{ enroll.course_name }} ({{ enroll.course_code }})</p>
+            <p class="text-gray-600 text-sm">Credits: {{ enroll.course_credit }} | Schedule: {{ enroll.class_days }}</p>
+            <p class="text-gray-600 text-sm">Location: {{ enroll.classroom }}</p>
+          </div>
+          <form method="POST" action="{{ url_for('student_drop_course_enroll_page') }}">
+            <input type="hidden" name="section_id" value="{{ enroll.section_id }}">
+            <button type="submit" class="text-red-600 hover:text-red-800 text-sm">❌ Cancel</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      
+      {% else %}
+      <div class="p-4 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded">
+        <i class="fas fa-exclamation-circle mr-2"></i> No sections enrolled.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Ineligible Sections Table -->
+<div class="bg-white p-6 rounded-lg shadow-md mt-10">
+  <h2 class="text-xl font-bold mb-4">Other Sections (Not Eligible)</h2>
+  {% if ineligible_sections %}
+  <div class="overflow-x-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="py-2 px-4 text-left">Course</th>
+          <th class="py-2 px-4 text-left">Code</th>
+          <th class="py-2 px-4 text-left">Semester</th>
+          <th class="py-2 px-4 text-left">Schedule</th>
+          <th class="py-2 px-4 text-left">Available / Total Seats</th>
+          <th class="py-2 px-4 text-left">Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for section in ineligible_sections %}
+        <tr class="border-t">
+          <td class="py-2 px-4">{{ section.course_name }}</td>
+          <td class="py-2 px-4">{{ section.course_code }}</td>
+          <td class="py-2 px-4">{{ section.semester_name }}</td>
+          <td class="py-2 px-4">{{ section.schedule }}</td>
+          <td class="py-2 px-4">{{ section.available_seats }} / {{ section.total_seats }}</td>
+          <td class="py-2 px-4 text-red-600">{{ section.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-gray-600">All available sections are eligible for enrollment.</p>
+  {% endif %}
+</div>
+
+
+    <!-- Back Link -->
+    <div class="mt-6">
+      <a href="{{ url_for('student_home') }}" class="text-blue-600 hover:underline">
+        <i class="fas fa-arrow-left mr-1"></i> Back to Home
+      </a>
+    </div>
+  </main>
+</body>
+</html>
